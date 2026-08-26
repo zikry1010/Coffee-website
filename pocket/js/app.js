@@ -76,7 +76,13 @@
     toast._t = setTimeout(() => el.classList.remove("is-on"), 2200);
   }
 
+  function hideToast() {
+    clearTimeout(toast._t);
+    $("#toast").classList.remove("is-on");
+  }
+
   function showView(name) {
+    hideToast();
     $$(".view").forEach((v) => v.classList.remove("is-active"));
     const view = $(`#view-${name}`);
     if (!view) return;
