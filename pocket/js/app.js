@@ -80,9 +80,10 @@
     $$(".view").forEach((v) => v.classList.remove("is-active"));
     const view = $(`#view-${name}`);
     if (!view) return;
-    view.classList.remove("is-active");
-    // force reflow for animation restart
+    // Restart enter animation when switching screens
+    view.style.animation = "none";
     void view.offsetWidth;
+    view.style.animation = "";
     view.classList.add("is-active");
   }
 
