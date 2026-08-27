@@ -40,6 +40,7 @@
         <p class="hero-label">Ready to place</p>
         <p class="hero-amount" id="unallocated-display">₱0</p>
         <p class="hero-sub">Money waiting to be split into your jars</p>
+        <p class="hero-total" id="total-overview">In jars: ₱0 · Total: ₱0</p>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary" id="btn-add-income">Add income</button>
           <button type="button" class="btn btn-ghost" id="btn-allocate" disabled>Split now</button>
@@ -90,7 +91,10 @@
         <div id="allocate-fields"></div>
         <button type="submit" class="btn btn-primary btn-block">Confirm split</button>
       </form>
-      <button type="button" class="text-btn evenly" id="btn-split-evenly">Split evenly across jars</button>
+      <div class="split-actions">
+        <button type="button" class="text-btn" id="btn-apply-plan">Apply my % plan</button>
+        <button type="button" class="text-btn" id="btn-split-evenly">Split evenly</button>
+      </div>
     </section>
 
     <!-- JAR DETAIL -->
@@ -118,11 +122,12 @@
           <span>Amount</span>
           <input type="number" id="spend-amount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
         </label>
+        <p class="spend-guard" id="spend-guard" aria-live="polite">Available in this jar</p>
         <label class="field">
           <span>What for <em>(optional)</em></span>
           <input type="text" id="spend-note" maxlength="80" placeholder="e.g. Groceries" />
         </label>
-        <button type="submit" class="btn btn-primary btn-block">Record spend</button>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-record-spend">Record spend</button>
       </form>
     </section>
 
@@ -154,6 +159,12 @@
           <span>Currency symbol</span>
           <input type="text" id="currency-symbol" maxlength="3" placeholder="₱" />
         </label>
+        <div class="settings-block plan-block">
+          <h3>Split plan (%)</h3>
+          <p>When you get paid, apply these percentages so each jar gets its share and you don’t overspend elsewhere.</p>
+          <div id="plan-fields" class="plan-fields"></div>
+          <p class="plan-total" id="plan-total">Total: 0%</p>
+        </div>
         <button type="submit" class="btn btn-primary btn-block">Save</button>
       </form>
       <div class="settings-block">

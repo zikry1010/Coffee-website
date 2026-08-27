@@ -167,6 +167,13 @@ button {
   font-size: 1.02rem;
 }
 
+.hero-total {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--leaf-mid);
+}
+
 .hero-actions {
   display: flex;
   gap: 10px;
@@ -221,11 +228,16 @@ button {
   padding: 8px 0;
 }
 
-.text-btn.evenly {
-  display: block;
-  width: 100%;
-  text-align: center;
+.split-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 8px;
+}
+
+.split-actions .text-btn {
+  flex: 1;
+  text-align: center;
 }
 
 .section-head {
@@ -300,6 +312,15 @@ button {
 .jar-meta span {
   color: var(--ink-soft);
   font-size: 0.9rem;
+}
+
+.jar-item.is-empty .jar-meta span {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+.jar-item.is-empty .jar-amt {
+  color: var(--ink-soft);
 }
 
 .jar-amt {
@@ -408,6 +429,90 @@ button {
   gap: 8px;
   font-weight: 600;
   padding-bottom: 14px;
+}
+
+.alloc-row .name small {
+  display: block;
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.spend-guard {
+  margin: -4px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--line);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.spend-guard.is-warn {
+  color: var(--coral);
+  border-color: rgba(196, 92, 74, 0.35);
+  background: rgba(196, 92, 74, 0.08);
+}
+
+.spend-guard.is-ok {
+  color: var(--leaf-mid);
+  border-color: rgba(47, 107, 90, 0.28);
+  background: rgba(47, 107, 90, 0.08);
+}
+
+.plan-block {
+  margin: 8px 0 0;
+  padding-top: 0;
+}
+
+.plan-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.plan-row {
+  display: grid;
+  grid-template-columns: 1fr 72px auto;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.plan-row > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-row input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  text-align: right;
+}
+
+.plan-unit {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.plan-total {
+  margin: 10px 0 0;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.plan-total.is-warn {
+  color: var(--coral);
+}
+
+.plan-total.is-ok {
+  color: var(--leaf-mid);
 }
 
 .jar-hero {

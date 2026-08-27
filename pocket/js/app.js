@@ -12,10 +12,10 @@
   ];
 
   const DEFAULT_JARS = [
-    { id: "commitment", name: "Commitment", color: "#c45c4a", balance: 0 },
-    { id: "food", name: "Food", color: "#e8a45a", balance: 0 },
-    { id: "saving", name: "Saving", color: "#2f6b5a", balance: 0 },
-    { id: "fun", name: "Fun", color: "#3d6ea8", balance: 0 },
+    { id: "commitment", name: "Commitment", color: "#c45c4a", balance: 0, planPct: 40 },
+    { id: "food", name: "Food", color: "#e8a45a", balance: 0, planPct: 30 },
+    { id: "saving", name: "Saving", color: "#2f6b5a", balance: 0, planPct: 20 },
+    { id: "fun", name: "Fun", color: "#3d6ea8", balance: 0, planPct: 10 },
   ];
 
   const defaultState = () => ({
@@ -38,12 +38,26 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaultState();
       const parsed = JSON.parse(raw);
+      const base = defaultState();
+      const jars =
+        Array.isArray(parsed.jars) && parsed.jars.length
+          ? parsed.jars.map((jar) => {
+              const fallback = base.jars.find((d) => d.id === jar.id);
+              return {
+                ...jar,
+                planPct:
+                  typeof jar.planPct === "number"
+                    ? jar.planPct
+                    : fallback
+                      ? fallback.planPct
+                      : 0,
+              };
+            })
+          : base.jars;
       return {
-        ...defaultState(),
+        ...base,
         ...parsed,
-        jars: Array.isArray(parsed.jars) && parsed.jars.length
-          ? parsed.jars
-          : defaultState().jars,
+        jars,
         activity: Array.isArray(parsed.activity) ? parsed.activity : [],
       };
     } catch {
@@ -86,7 +100,6 @@
     $$(".view").forEach((v) => v.classList.remove("is-active"));
     const view = $(`#view-${name}`);
     if (!view) return;
-    // Restart enter animation when switching screens
     view.style.animation = "none";
     void view.offsetWidth;
     view.style.animation = "";
@@ -102,8 +115,25 @@
     state.activity = state.activity.slice(0, 80);
   }
 
+  function jarsTotal() {
+    return state.jars.reduce((sum, jar) => sum + (Number(jar.balance) || 0), 0);
+  }
+
+  function planSum() {
+    return state.jars.reduce((sum, jar) => sum + (Number(jar.planPct) || 0), 0);
+  }
+
+  function jarStatus(jar) {
+    if (jar.balance <= 0) return "Empty — stop spending";
+    if (jar.planPct > 0) return `${jar.planPct}% of each paycheck`;
+    return "Tap to spend or edit";
+  }
+
   function renderHome() {
+    const inJars = jarsTotal();
+    const total = Math.round((inJars + state.unallocated) * 100) / 100;
     $("#unallocated-display").textContent = money(state.unallocated);
+    $("#total-overview").textContent = `In jars: ${money(inJars)} · Total: ${money(total)}`;
     $("#btn-allocate").disabled = state.unallocated <= 0;
 
     const list = $("#jar-list");
@@ -114,11 +144,11 @@
         .map(
           (jar, i) => `
         <li style="animation-delay:${i * 40}ms">
-          <button type="button" class="jar-item" data-jar="${jar.id}">
+          <button type="button" class="jar-item ${jar.balance <= 0 ? "is-empty" : ""}" data-jar="${jar.id}">
             <span class="jar-dot" style="background:${jar.color}"></span>
             <span class="jar-meta">
               <strong>${escapeHtml(jar.name)}</strong>
-              <span>Tap to spend or edit</span>
+              <span>${escapeHtml(jarStatus(jar))}</span>
             </span>
             <span class="jar-amt">${money(jar.balance)}</span>
           </button>
@@ -165,6 +195,7 @@
 
   function renderAllocate() {
     $("#alloc-remaining").textContent = money(state.unallocated);
+    $("#alloc-remaining").style.color = "";
     const wrap = $("#allocate-fields");
     wrap.innerHTML = state.jars
       .map(
@@ -172,7 +203,10 @@
       <div class="alloc-row">
         <div class="name">
           <span class="jar-dot" style="background:${jar.color}"></span>
-          ${escapeHtml(jar.name)}
+          <span>
+            ${escapeHtml(jar.name)}
+            <small>${jar.planPct || 0}%</small>
+          </span>
         </div>
         <label class="field">
           <span class="is-hidden">Amount</span>
@@ -202,6 +236,47 @@
     $("#alloc-remaining").style.color = left < 0 ? "var(--coral)" : "";
   }
 
+  function fillAllocInputs(valuesById) {
+    $$("#allocate-fields [data-alloc]").forEach((input) => {
+      const val = valuesById[input.dataset.alloc];
+      input.value = val > 0 ? String(val) : "";
+    });
+    updateAllocRemaining();
+  }
+
+  function applyPlanPercents() {
+    if (!state.jars.length || state.unallocated <= 0) return;
+    const totalPct = planSum();
+    if (totalPct <= 0) {
+      toast("Set jar percentages in Settings first");
+      return;
+    }
+    if (totalPct > 100.001) {
+      toast("Plan is over 100% — fix it in Settings");
+      return;
+    }
+
+    const values = {};
+    let used = 0;
+    const ordered = state.jars.filter((j) => (j.planPct || 0) > 0);
+    ordered.forEach((jar, i) => {
+      let amount;
+      if (i === ordered.length - 1 && Math.abs(totalPct - 100) < 0.001) {
+        amount = Math.round((state.unallocated - used) * 100) / 100;
+      } else {
+        amount =
+          Math.floor(state.unallocated * (jar.planPct / 100) * 100) / 100;
+      }
+      values[jar.id] = Math.max(0, amount);
+      used = Math.round((used + values[jar.id]) * 100) / 100;
+    });
+    state.jars.forEach((jar) => {
+      if (values[jar.id] == null) values[jar.id] = 0;
+    });
+    fillAllocInputs(values);
+    toast("Plan applied — review then confirm");
+  }
+
   function openJar(id) {
     const jar = state.jars.find((j) => j.id === id);
     if (!jar) return;
@@ -210,6 +285,7 @@
     $("#jar-detail-balance").textContent = money(jar.balance);
     $("#jar-detail-swatch").style.background = jar.color;
     $("#spend-from-label").textContent = `From ${jar.name} · available ${money(jar.balance)}`;
+    $("#btn-spend").disabled = jar.balance <= 0;
 
     const rows = state.activity.filter((a) => a.jarId === id).slice(0, 20);
     $("#jar-activity-list").innerHTML = rows.length
@@ -219,6 +295,32 @@
     showView("jar");
   }
 
+  function updateSpendGuard() {
+    const jar = state.jars.find((j) => j.id === currentJarId);
+    const guard = $("#spend-guard");
+    const btn = $("#btn-record-spend");
+    if (!jar || !guard || !btn) return;
+
+    const amount = Number($("#spend-amount").value) || 0;
+    const left = Math.round((jar.balance - amount) * 100) / 100;
+
+    guard.classList.remove("is-warn", "is-ok");
+    if (amount <= 0) {
+      guard.textContent = `Available: ${money(jar.balance)} — you can’t spend more than this`;
+      btn.disabled = true;
+      return;
+    }
+    if (amount > jar.balance + 0.001) {
+      guard.textContent = `Too much — only ${money(jar.balance)} left in this jar`;
+      guard.classList.add("is-warn");
+      btn.disabled = true;
+      return;
+    }
+    guard.textContent = `After this spend: ${money(left)} left in ${jar.name}`;
+    guard.classList.add("is-ok");
+    btn.disabled = false;
+  }
+
   function renderColorPicks(active) {
     selectedColor = active || COLORS[0];
     $("#color-picks").innerHTML = COLORS.map(
@@ -226,6 +328,40 @@
       <button type="button" class="color-pick ${c === selectedColor ? "is-selected" : ""}"
         style="background:${c}" data-color="${c}" aria-label="Color ${c}"></button>`
     ).join("");
+  }
+
+  function renderPlanFields() {
+    const wrap = $("#plan-fields");
+    if (!wrap) return;
+    wrap.innerHTML = state.jars
+      .map(
+        (jar) => `
+      <label class="plan-row">
+        <span>
+          <span class="jar-dot" style="background:${jar.color}"></span>
+          ${escapeHtml(jar.name)}
+        </span>
+        <input type="number" inputmode="decimal" min="0" max="100" step="1"
+          data-plan="${jar.id}" value="${jar.planPct || 0}" />
+        <span class="plan-unit">%</span>
+      </label>`
+      )
+      .join("");
+    wrap.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", updatePlanTotal);
+    });
+    updatePlanTotal();
+  }
+
+  function updatePlanTotal() {
+    const total = $$("#plan-fields [data-plan]").reduce(
+      (sum, input) => sum + (Number(input.value) || 0),
+      0
+    );
+    const el = $("#plan-total");
+    el.textContent = `Total: ${total}%`;
+    el.classList.toggle("is-warn", total > 100);
+    el.classList.toggle("is-ok", total === 100);
   }
 
   function openJarForm(editId) {
@@ -252,6 +388,7 @@
 
   $("#btn-settings").addEventListener("click", () => {
     $("#currency-symbol").value = state.currency;
+    renderPlanFields();
     showView("settings");
   });
 
@@ -276,8 +413,11 @@
 
   $("#btn-spend").addEventListener("click", () => {
     $("#form-spend").reset();
+    updateSpendGuard();
     showView("spend");
   });
+
+  $("#spend-amount").addEventListener("input", updateSpendGuard);
 
   $("#btn-edit-jar").addEventListener("click", () => {
     if (currentJarId) openJarForm(currentJarId);
@@ -346,20 +486,23 @@
     toast("Money split into jars");
   });
 
+  $("#btn-apply-plan").addEventListener("click", applyPlanPercents);
+
   $("#btn-split-evenly").addEventListener("click", () => {
     if (!state.jars.length || state.unallocated <= 0) return;
     const each =
       Math.floor((state.unallocated / state.jars.length) * 100) / 100;
+    const values = {};
     let used = 0;
-    $$("#allocate-fields [data-alloc]").forEach((input, i, arr) => {
+    state.jars.forEach((jar, i) => {
       let val = each;
-      if (i === arr.length - 1) {
+      if (i === state.jars.length - 1) {
         val = Math.round((state.unallocated - used) * 100) / 100;
       }
-      input.value = val > 0 ? String(val) : "";
-      used = Math.round((used + (Number(input.value) || 0)) * 100) / 100;
+      values[jar.id] = val > 0 ? val : 0;
+      used = Math.round((used + values[jar.id]) * 100) / 100;
     });
-    updateAllocRemaining();
+    fillAllocInputs(values);
   });
 
   $("#form-spend").addEventListener("submit", (e) => {
@@ -369,7 +512,8 @@
     const amount = Number($("#spend-amount").value);
     if (!(amount > 0)) return;
     if (amount > jar.balance + 0.001) {
-      toast("Not enough in this jar");
+      updateSpendGuard();
+      toast("Not enough in this jar — don’t overspend");
       return;
     }
     const note = $("#spend-note").value.trim();
@@ -383,7 +527,7 @@
     });
     save();
     openJar(jar.id);
-    toast("Spend recorded");
+    toast(jar.balance <= 0 ? "Jar empty — spending stopped" : "Spend recorded");
   });
 
   $("#form-jar").addEventListener("submit", (e) => {
@@ -405,6 +549,7 @@
         name,
         color: selectedColor,
         balance: 0,
+        planPct: 0,
       };
       state.jars.push(jar);
       save();
@@ -435,10 +580,25 @@
     e.preventDefault();
     const symbol = $("#currency-symbol").value.trim() || "₱";
     state.currency = symbol.slice(0, 3);
+
+    let totalPct = 0;
+    $$("#plan-fields [data-plan]").forEach((input) => {
+      const jar = state.jars.find((j) => j.id === input.dataset.plan);
+      if (!jar) return;
+      const pct = Math.max(0, Math.min(100, Number(input.value) || 0));
+      jar.planPct = pct;
+      totalPct += pct;
+    });
+    if (totalPct > 100.001) {
+      toast("Percentages can’t add up to more than 100");
+      updatePlanTotal();
+      return;
+    }
+
     save();
     renderHome();
     showView("home");
-    toast("Settings saved");
+    toast(totalPct === 100 ? "Plan saved — ready for payday" : "Settings saved");
   });
 
   $("#btn-reset").addEventListener("click", () => {

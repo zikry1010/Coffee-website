@@ -1,6 +1,6 @@
 # Pocket
 
-Mobile-first money splitter. Add income, divide it into jars (Commitment, Food, Saving, Fun, or your own), then spend from each jar so every peso has a job.
+Mobile-first money splitter. Add income, divide it into jars (Commitment, Food, Saving, Fun, or your own), then spend only from each jar so you don’t overspend.
 
 ## Use on your phone
 
@@ -17,10 +17,18 @@ Data stays on your device (`localStorage`). Nothing is uploaded.
 ## What you can do
 
 - **Add income** → lands in “Ready to place”
-- **Split now** → move amounts into jars (or split evenly)
-- **Tap a jar** → log spends, edit name/color, or delete empty jars
-- **Settings** → change currency symbol (default ₱)
+- **Split now** → move amounts into jars, apply your **% plan**, or split evenly
+- **Tap a jar** → log spends (blocked if the jar is empty or the amount is too high)
+- **Settings** → currency symbol + paycheck split percentages
+- **Overview** → see money in jars and your total so every peso has a place
 
-## Default jars
+## Default jars & plan
 
-Commitment · Food · Saving · Fun
+| Jar | Share of income |
+| --- | --- |
+| Commitment | 40% |
+| Food | 30% |
+| Saving | 20% |
+| Fun | 10% |
+
+Change these anytime in Settings so payday always funds the right jars.
