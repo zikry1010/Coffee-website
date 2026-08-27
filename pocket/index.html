@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a3a32" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Pocket — split your income into commitments, food, savings, and more." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <title>Pocket</title>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <h1 class="brand-name">Pocket</h1>
+    </div>
+    <button type="button" class="icon-btn" id="btn-settings" aria-label="Settings">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+        <path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V19.5a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H4.5a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V4.5a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1h.09a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="shell">
+    <!-- HOME -->
+    <section id="view-home" class="view is-active">
+      <div class="hero">
+        <p class="hero-label">Ready to place</p>
+        <p class="hero-amount" id="unallocated-display">₱0</p>
+        <p class="hero-sub">Money waiting to be split into your jars</p>
+        <p class="hero-total" id="total-overview">In jars: ₱0 · Total: ₱0</p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary" id="btn-add-income">Add income</button>
+          <button type="button" class="btn btn-ghost" id="btn-allocate" disabled>Split now</button>
+        </div>
+      </div>
+
+      <section class="jars-section" aria-labelledby="jars-heading">
+        <div class="section-head">
+          <h2 id="jars-heading">Your jars</h2>
+          <button type="button" class="text-btn" id="btn-add-jar">+ New jar</button>
+        </div>
+        <ul class="jar-list" id="jar-list"></ul>
+      </section>
+
+      <section class="activity-section" aria-labelledby="activity-heading">
+        <div class="section-head">
+          <h2 id="activity-heading">Recent</h2>
+        </div>
+        <ul class="activity-list" id="activity-list"></ul>
+      </section>
+    </section>
+
+    <!-- ADD INCOME -->
+    <section id="view-income" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">Add income</h2>
+      <p class="view-sub">Paycheck, side hustle, gift — drop it in first, then split.</p>
+      <form id="form-income" class="stack-form">
+        <label class="field">
+          <span>Amount</span>
+          <input type="number" id="income-amount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+        </label>
+        <label class="field">
+          <span>Note <em>(optional)</em></span>
+          <input type="text" id="income-note" maxlength="80" placeholder="e.g. Mid-month salary" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Add to Pocket</button>
+      </form>
+    </section>
+
+    <!-- ALLOCATE -->
+    <section id="view-allocate" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">Split money</h2>
+      <p class="view-sub">Move from ready-to-place into your jars. Leave some unallocated if you want.</p>
+      <p class="alloc-remaining">Still to place: <strong id="alloc-remaining">₱0</strong></p>
+      <form id="form-allocate" class="stack-form">
+        <div id="allocate-fields"></div>
+        <button type="submit" class="btn btn-primary btn-block">Confirm split</button>
+      </form>
+      <div class="split-actions">
+        <button type="button" class="text-btn" id="btn-apply-plan">Apply my % plan</button>
+        <button type="button" class="text-btn" id="btn-split-evenly">Split evenly</button>
+      </div>
+    </section>
+
+    <!-- JAR DETAIL -->
+    <section id="view-jar" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <div class="jar-hero">
+        <span class="jar-swatch" id="jar-detail-swatch"></span>
+        <h2 class="view-title" id="jar-detail-name">Jar</h2>
+        <p class="jar-balance" id="jar-detail-balance">₱0</p>
+      </div>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-primary" id="btn-spend">Log spend</button>
+        <button type="button" class="btn btn-ghost" id="btn-edit-jar">Edit jar</button>
+      </div>
+      <ul class="activity-list" id="jar-activity-list"></ul>
+    </section>
+
+    <!-- SPEND -->
+    <section id="view-spend" class="view">
+      <button type="button" class="back-btn" data-back="jar">← Back</button>
+      <h2 class="view-title">Log spend</h2>
+      <p class="view-sub" id="spend-from-label">From jar</p>
+      <form id="form-spend" class="stack-form">
+        <label class="field">
+          <span>Amount</span>
+          <input type="number" id="spend-amount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+        </label>
+        <p class="spend-guard" id="spend-guard" aria-live="polite">Available in this jar</p>
+        <label class="field">
+          <span>What for <em>(optional)</em></span>
+          <input type="text" id="spend-note" maxlength="80" placeholder="e.g. Groceries" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-record-spend">Record spend</button>
+      </form>
+    </section>
+
+    <!-- EDIT / NEW JAR -->
+    <section id="view-jar-form" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title" id="jar-form-title">New jar</h2>
+      <form id="form-jar" class="stack-form">
+        <input type="hidden" id="jar-edit-id" value="" />
+        <label class="field">
+          <span>Name</span>
+          <input type="text" id="jar-name" maxlength="40" placeholder="e.g. Commitment" required />
+        </label>
+        <fieldset class="field color-field">
+          <legend>Color</legend>
+          <div class="color-picks" id="color-picks"></div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-block">Save jar</button>
+        <button type="button" class="btn btn-danger btn-block is-hidden" id="btn-delete-jar">Delete jar</button>
+      </form>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">Settings</h2>
+      <form id="form-settings" class="stack-form">
+        <label class="field">
+          <span>Currency symbol</span>
+          <input type="text" id="currency-symbol" maxlength="3" placeholder="₱" />
+        </label>
+        <div class="settings-block plan-block">
+          <h3>Split plan (%)</h3>
+          <p>When you get paid, apply these percentages so each jar gets its share and you don’t overspend elsewhere.</p>
+          <div id="plan-fields" class="plan-fields"></div>
+          <p class="plan-total" id="plan-total">Total: 0%</p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save</button>
+      </form>
+      <div class="settings-block">
+        <h3>On your phone</h3>
+        <p>Open this page in Safari or Chrome, then use <strong>Add to Home Screen</strong>. Pocket works offline after the first visit.</p>
+      </div>
+      <button type="button" class="btn btn-danger btn-block" id="btn-reset">Reset all data</button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
