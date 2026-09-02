@@ -19,7 +19,7 @@
   ];
 
   const defaultState = () => ({
-    currency: "₱",
+    currency: "RM",
     unallocated: 0,
     jars: DEFAULT_JARS.map((j) => ({ ...j })),
     activity: [],
@@ -112,7 +112,7 @@
       at: Date.now(),
       ...entry,
     });
-    state.activity = state.activity.slice(0, 80);
+    state.activity = state.activity.slice(0, 200);
   }
 
   function jarsTotal() {
@@ -141,19 +141,21 @@
       list.innerHTML = `<li class="empty">No jars yet. Create one to start splitting.</li>`;
     } else {
       list.innerHTML = state.jars
-        .map(
-          (jar, i) => `
+        .map((jar, i) => {
+          const fill = inJars > 0 ? Math.min(100, (jar.balance / inJars) * 100) : 0;
+          return `
         <li style="animation-delay:${i * 40}ms">
           <button type="button" class="jar-item ${jar.balance <= 0 ? "is-empty" : ""}" data-jar="${jar.id}">
             <span class="jar-dot" style="background:${jar.color}"></span>
             <span class="jar-meta">
               <strong>${escapeHtml(jar.name)}</strong>
               <span>${escapeHtml(jarStatus(jar))}</span>
+              <span class="jar-bar" aria-hidden="true"><span style="width:${fill}%;background:${jar.color}"></span></span>
             </span>
             <span class="jar-amt">${money(jar.balance)}</span>
           </button>
-        </li>`
-        )
+        </li>`;
+        })
         .join("");
     }
 
@@ -169,20 +171,148 @@
   }
 
   function activityRow(a) {
-    const sign = a.amount >= 0 ? "pos" : "neg";
-    const amt = a.amount >= 0 ? `+${money(a.amount)}` : `−${money(Math.abs(a.amount))}`;
     const when = new Date(a.at).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
     });
+    const detail = a.detail ? `${a.detail} · ${when}` : when;
+    let sign = a.amount >= 0 ? "pos" : "neg";
+    let amt = a.amount >= 0 ? `+${money(a.amount)}` : `−${money(Math.abs(a.amount))}`;
+    if (a.type === "transfer") {
+      sign = "";
+      amt = money(Math.abs(a.amount));
+    }
     return `
       <li class="activity-item">
         <div class="left">
           <strong>${escapeHtml(a.title)}</strong>
-          <span>${escapeHtml(a.detail || when)}</span>
+          <span>${escapeHtml(detail)}</span>
         </div>
         <div class="right ${sign}">${amt}</div>
       </li>`;
+  }
+
+  function monthKey(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${d.getMonth()}`;
+  }
+
+  function renderHistory(filter) {
+    const active = filter || $("#history-filters .chip.is-on")?.dataset.filter || "all";
+    const rows = state.activity.filter((a) => active === "all" || a.type === active);
+    $("#history-list").innerHTML = rows.length
+      ? rows.map(activityRow).join("")
+      : `<li class="empty">No ${active === "all" ? "" : active + " "}activity yet.</li>`;
+  }
+
+  function renderReport() {
+    const now = Date.now();
+    const key = monthKey(now);
+    const monthActs = state.activity.filter((a) => monthKey(a.at) === key);
+    const income = monthActs.filter((a) => a.type === "income").reduce((s, a) => s + a.amount, 0);
+    const spent = monthActs
+      .filter((a) => a.type === "spend")
+      .reduce((s, a) => s + Math.abs(a.amount), 0);
+    const inJars = jarsTotal();
+    const total = Math.round((inJars + state.unallocated) * 100) / 100;
+    const label = new Date(now).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    $("#report-period").textContent = label;
+    $("#report-summary").innerHTML = `
+      <div class="report-card"><span>Income in</span><strong>${money(income)}</strong></div>
+      <div class="report-card"><span>Spent</span><strong>${money(spent)}</strong></div>
+      <div class="report-card"><span>In jars</span><strong>${money(inJars)}</strong></div>
+      <div class="report-card"><span>Ready to place</span><strong>${money(state.unallocated)}</strong></div>
+      <div class="report-card"><span>Total on hand</span><strong>${money(total)}</strong></div>
+      <div class="report-card"><span>Moves this month</span><strong>${monthActs.length}</strong></div>`;
+    $("#report-jars").innerHTML = state.jars
+      .map((jar) => {
+        const fill = inJars > 0 ? Math.min(100, (jar.balance / inJars) * 100) : 0;
+        return `<li class="report-jar">
+          <div class="row"><span>${escapeHtml(jar.name)}</span><span>${money(jar.balance)}</span></div>
+          <div class="jar-bar"><span style="width:${fill}%;background:${jar.color}"></span></div>
+        </li>`;
+      })
+      .join("");
+  }
+
+  function renderTransfer() {
+    const jar = state.jars.find((j) => j.id === currentJarId);
+    if (!jar) return;
+    const others = state.jars.filter((j) => j.id !== jar.id);
+    $("#transfer-from-label").textContent = `From ${jar.name} · available ${money(jar.balance)}`;
+    $("#transfer-to").innerHTML = others.length
+      ? others
+          .map((j) => `<option value="${j.id}">${escapeHtml(j.name)}</option>`)
+          .join("")
+      : `<option value="">Create another jar first</option>`;
+    $("#transfer-amount").value = "";
+    updateTransferGuard();
+  }
+
+  function updateTransferGuard() {
+    const jar = state.jars.find((j) => j.id === currentJarId);
+    const guard = $("#transfer-guard");
+    const btn = $("#btn-confirm-transfer");
+    if (!jar || !guard || !btn) return;
+    const amount = Number($("#transfer-amount").value) || 0;
+    const others = state.jars.filter((j) => j.id !== jar.id);
+    guard.classList.remove("is-warn", "is-ok");
+    if (!others.length) {
+      guard.textContent = "Create another jar before moving money";
+      guard.classList.add("is-warn");
+      btn.disabled = true;
+      return;
+    }
+    if (amount <= 0) {
+      guard.textContent = `Available: ${money(jar.balance)}`;
+      btn.disabled = true;
+      return;
+    }
+    if (amount > jar.balance + 0.001) {
+      guard.textContent = `Too much — only ${money(jar.balance)} left in ${jar.name}`;
+      guard.classList.add("is-warn");
+      btn.disabled = true;
+      return;
+    }
+    guard.textContent = `After this move: ${money(Math.round((jar.balance - amount) * 100) / 100)} left in ${jar.name}`;
+    guard.classList.add("is-ok");
+    btn.disabled = false;
+  }
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `pocket-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("Backup file downloaded");
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed || !Array.isArray(parsed.jars)) {
+          toast("That file is not a Pocket backup");
+          return;
+        }
+        state = {
+          ...defaultState(),
+          ...parsed,
+          jars: parsed.jars,
+          activity: Array.isArray(parsed.activity) ? parsed.activity : [],
+        };
+        save();
+        renderHome();
+        showView("home");
+        toast("Backup restored");
+      } catch {
+        toast("Could not read that file");
+      }
+    };
+    reader.readAsText(file);
   }
 
   function escapeHtml(str) {
@@ -394,6 +524,73 @@
 
   $("#btn-add-jar").addEventListener("click", () => openJarForm(null));
 
+  $("#btn-history").addEventListener("click", () => {
+    renderHistory("all");
+    $$("#history-filters .chip").forEach((chip) =>
+      chip.classList.toggle("is-on", chip.dataset.filter === "all")
+    );
+    showView("history");
+  });
+
+  $("#btn-report").addEventListener("click", () => {
+    renderReport();
+    showView("report");
+  });
+
+  $("#btn-help").addEventListener("click", () => showView("help"));
+
+  $("#history-filters").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-filter]");
+    if (!chip) return;
+    $$("#history-filters .chip").forEach((el) => el.classList.toggle("is-on", el === chip));
+    renderHistory(chip.dataset.filter);
+  });
+
+  $("#btn-transfer").addEventListener("click", () => {
+    renderTransfer();
+    showView("transfer");
+  });
+
+  $("#transfer-amount").addEventListener("input", updateTransferGuard);
+  $("#transfer-to").addEventListener("change", updateTransferGuard);
+
+  $("#form-transfer").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const from = state.jars.find((j) => j.id === currentJarId);
+    const to = state.jars.find((j) => j.id === $("#transfer-to").value);
+    const amount = Number($("#transfer-amount").value);
+    if (!from || !to || !(amount > 0)) return;
+    if (from.id === to.id) {
+      toast("Pick a different jar");
+      return;
+    }
+    if (amount > from.balance + 0.001) {
+      updateTransferGuard();
+      toast("Not enough in this jar");
+      return;
+    }
+    from.balance = Math.round((from.balance - amount) * 100) / 100;
+    to.balance = Math.round((to.balance + amount) * 100) / 100;
+    addActivity({
+      type: "transfer",
+      jarId: from.id,
+      toJarId: to.id,
+      title: `${from.name} → ${to.name}`,
+      detail: "Moved between jars",
+      amount,
+    });
+    save();
+    openJar(from.id);
+    toast("Money moved");
+  });
+
+  $("#btn-export").addEventListener("click", exportData);
+  $("#import-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (file) importData(file);
+  });
+
   $$("[data-back]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.back;
@@ -578,7 +775,7 @@
 
   $("#form-settings").addEventListener("submit", (e) => {
     e.preventDefault();
-    const symbol = $("#currency-symbol").value.trim() || "₱";
+    const symbol = $("#currency-symbol").value.trim() || "RM";
     state.currency = symbol.slice(0, 3);
 
     let totalPct = 0;

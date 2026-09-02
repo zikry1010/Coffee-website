@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NWC4343 Group Project Report — Pocket</title>
+  <style>
+    :root { --ink: #14241f; --muted: #3d534b; --line: #c9d5ce; --leaf: #1a3a32; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto;
+      max-width: 800px;
+      padding: 48px 28px 80px;
+      font: 16px/1.55 "Georgia", "Times New Roman", serif;
+      color: var(--ink);
+      background: #fff;
+    }
+    h1, h2, h3 { font-family: "Palatino Linotype", "Palatino", serif; color: var(--leaf); }
+    h1 { font-size: 1.8rem; margin-bottom: 0.2em; }
+    h2 { margin-top: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: 0.2em; }
+    .cover { text-align: center; padding: 40px 0 24px; }
+    .cover p { margin: 0.35em 0; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95rem; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #eef5f0; }
+    code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 0.88rem; }
+    pre { background: #f3f7f4; padding: 12px; overflow: auto; }
+    .note { color: var(--muted); font-size: 0.92rem; }
+    @media print {
+      body { padding: 16px; }
+      .noprint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <p class="noprint note">Print this page to PDF (Ctrl+P) for a Word-style submission. Fill in names before printing. The full text also lives in PROJECT_REPORT.md.</p>
+
+  <header class="cover">
+    <p>NWC4343 · Group Project · Session 0826</p>
+    <h1>Pocket: A Mobile Income Management System</h1>
+    <p>Progressive Web Application</p>
+    <p>Group members: see GROUP_WORKLOAD.md</p>
+    <p>Lecturer: _______________________</p>
+  </header>
+
+  <h2>Abstract</h2>
+  <p>Many people receive income as a single balance and then spend until the money is gone. Pocket is a mobile web application that forces a different habit: income is placed first, then split into jars (Commitment, Food, Saving, Fun, or user-defined), and spending is allowed only from a chosen jar. If a jar is empty or the amount is higher than the remaining balance, the spend is blocked. The system runs in the phone browser, can be installed to the home screen, and stores data only on the device.</p>
+
+  <h2>1. Introduction</h2>
+  <h3>1.1 Problem</h3>
+  <p>How can a person on a phone separate incoming money into commitments, food, saving, and other uses, and be stopped from spending more than a given jar holds?</p>
+  <h3>1.2 Objectives</h3>
+  <ol>
+    <li>Record income in a ready-to-place pool.</li>
+    <li>Split that pool with typed amounts, an even split, or a stored percentage plan.</li>
+    <li>Allow spending only from a selected jar; reject overspend.</li>
+    <li>Support transfers, monthly summary, history, and JSON backup.</li>
+    <li>Ship as an installable PWA that works offline after the first visit.</li>
+  </ol>
+  <h3>1.3 Scope</h3>
+  <p><strong>In scope:</strong> single-user phone use, local storage, income/split/spend/transfer/report/backup.</p>
+  <p><strong>Out of scope:</strong> bank login, multi-user cloud sync, native store listings.</p>
+
+  <h2>2. Related work</h2>
+  <table>
+    <tr><th>Approach</th><th>Strength</th><th>Weakness</th></tr>
+    <tr><td>Bank-app balance</td><td>Live numbers</td><td>No hard split</td></tr>
+    <tr><td>Spreadsheet</td><td>Flexible</td><td>Slow on a phone; no lock</td></tr>
+    <tr><td>Envelope / jar method</td><td>Clear limits</td><td>Paper is inconvenient</td></tr>
+  </table>
+  <p>Pocket implements the envelope method as a small PWA (Ramsey, 2013; CFPB, n.d.).</p>
+
+  <h2>3. Methodology</h2>
+  <p>Short iterative cycle: problem capture → prototype → overspend guards and % plan → transfers/report/backup → documentation and black-box tests. Static hosting only; no server.</p>
+
+  <h2>4. Requirements</h2>
+  <table>
+    <tr><th>ID</th><th>Functional requirement</th></tr>
+    <tr><td>FR1–2</td><td>Add income into an unallocated pool</td></tr>
+    <tr><td>FR3–4</td><td>Split via amounts, even split, or % plan</td></tr>
+    <tr><td>FR5–7</td><td>Guarded spend from a jar</td></tr>
+    <tr><td>FR8</td><td>Create / edit / delete empty jars</td></tr>
+    <tr><td>FR9</td><td>Transfer between jars</td></tr>
+    <tr><td>FR10–11</td><td>History filters and monthly report</td></tr>
+    <tr><td>FR12–13</td><td>Backup and settings</td></tr>
+  </table>
+  <p>Non-functional: phone layout, offline cache, on-device data, two-decimal money.</p>
+
+  <h2>5. Design</h2>
+  <pre>Phone browser → Pocket PWA → views + state → localStorage ("pocket.v1")</pre>
+  <p>State fields: <code>currency</code>, <code>unallocated</code>, <code>jars[]</code> (id, name, color, balance, planPct), <code>activity[]</code> (id, at, type, title, detail, amount).</p>
+  <p>Rules: income raises the pool; a split cannot exceed the pool; a spend or transfer cannot exceed the source jar.</p>
+
+  <h2>6. Implementation</h2>
+  <p>HTML/CSS/vanilla JavaScript. Default plan 40% Commitment, 30% Food, 20% Saving, 10% Fun. Example: RM 5,000 → 2000 / 1500 / 1000 / 500. A Food spend of 2000 is blocked; 200 succeeds (Food 1300).</p>
+
+  <h2>7. Testing</h2>
+  <p>See TEST_PLAN.md (TC01–TC20). Development checks covered income, plan split, overspend block, valid spend, transfer, plan validation, export/import, and the app shell.</p>
+
+  <h2>8. Conclusion</h2>
+  <p>Pocket separates income on a phone and blocks overspending a jar. Future work: monthly caps, optional login backup, native wrapper.</p>
+
+  <h2>References</h2>
+  <p>Consumer Financial Protection Bureau. (n.d.). <em>Your money, your goals</em>.</p>
+  <p>Ramsey, D. (2013). <em>The total money makeover</em>. Thomas Nelson.</p>
+  <p>Mozilla Developer Network. (n.d.). <em>Progressive web apps</em>.</p>
+</body>
+</html>

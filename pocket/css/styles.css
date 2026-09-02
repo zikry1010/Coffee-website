@@ -181,6 +181,139 @@ button {
   flex-wrap: wrap;
 }
 
+.home-tools {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.home-tools .btn {
+  flex: 1;
+}
+
+.jar-bar {
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: rgba(20, 36, 31, 0.08);
+  overflow: hidden;
+}
+
+.jar-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  min-width: 0;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--leaf);
+  border: 1px solid var(--line);
+}
+
+.chip.is-on {
+  background: var(--leaf);
+  color: #f4faf7;
+  border-color: transparent;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.report-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line);
+}
+
+.report-card span {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.report-card strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.report-heading {
+  margin: 28px 0 12px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.report-jars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.report-jar {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.report-jar .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.help-steps {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  display: grid;
+  gap: 12px;
+  color: var(--ink-soft);
+}
+
+.help-steps strong {
+  color: var(--ink);
+}
+
+.file-btn {
+  position: relative;
+}
+
+.field select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  outline: none;
+}
+
+.field select:focus {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 4px rgba(126, 184, 159, 0.25);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

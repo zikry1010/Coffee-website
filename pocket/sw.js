@@ -1,4 +1,4 @@
-const CACHE = "pocket-v2";
+const CACHE = "pocket-v3";
 const ASSETS = [
   "./",
   "./index.html",

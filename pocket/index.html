@@ -38,9 +38,9 @@
     <section id="view-home" class="view is-active">
       <div class="hero">
         <p class="hero-label">Ready to place</p>
-        <p class="hero-amount" id="unallocated-display">₱0</p>
+        <p class="hero-amount" id="unallocated-display">RM0</p>
         <p class="hero-sub">Money waiting to be split into your jars</p>
-        <p class="hero-total" id="total-overview">In jars: ₱0 · Total: ₱0</p>
+        <p class="hero-total" id="total-overview">In jars: RM0 · Total: RM0</p>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary" id="btn-add-income">Add income</button>
           <button type="button" class="btn btn-ghost" id="btn-allocate" disabled>Split now</button>
@@ -55,9 +55,15 @@
         <ul class="jar-list" id="jar-list"></ul>
       </section>
 
+      <div class="home-tools">
+        <button type="button" class="btn btn-ghost" id="btn-report">This month</button>
+        <button type="button" class="btn btn-ghost" id="btn-help">How it works</button>
+      </div>
+
       <section class="activity-section" aria-labelledby="activity-heading">
         <div class="section-head">
           <h2 id="activity-heading">Recent</h2>
+          <button type="button" class="text-btn" id="btn-history">See all</button>
         </div>
         <ul class="activity-list" id="activity-list"></ul>
       </section>
@@ -86,7 +92,7 @@
       <button type="button" class="back-btn" data-back="home">← Back</button>
       <h2 class="view-title">Split money</h2>
       <p class="view-sub">Move from ready-to-place into your jars. Leave some unallocated if you want.</p>
-      <p class="alloc-remaining">Still to place: <strong id="alloc-remaining">₱0</strong></p>
+      <p class="alloc-remaining">Still to place: <strong id="alloc-remaining">RM0</strong></p>
       <form id="form-allocate" class="stack-form">
         <div id="allocate-fields"></div>
         <button type="submit" class="btn btn-primary btn-block">Confirm split</button>
@@ -103,10 +109,11 @@
       <div class="jar-hero">
         <span class="jar-swatch" id="jar-detail-swatch"></span>
         <h2 class="view-title" id="jar-detail-name">Jar</h2>
-        <p class="jar-balance" id="jar-detail-balance">₱0</p>
+        <p class="jar-balance" id="jar-detail-balance">RM0</p>
       </div>
       <div class="hero-actions">
         <button type="button" class="btn btn-primary" id="btn-spend">Log spend</button>
+        <button type="button" class="btn btn-ghost" id="btn-transfer">Move money</button>
         <button type="button" class="btn btn-ghost" id="btn-edit-jar">Edit jar</button>
       </div>
       <ul class="activity-list" id="jar-activity-list"></ul>
@@ -129,6 +136,66 @@
         </label>
         <button type="submit" class="btn btn-primary btn-block" id="btn-record-spend">Record spend</button>
       </form>
+    </section>
+
+    <!-- TRANSFER -->
+    <section id="view-transfer" class="view">
+      <button type="button" class="back-btn" data-back="jar">← Back</button>
+      <h2 class="view-title">Move money</h2>
+      <p class="view-sub" id="transfer-from-label">From jar</p>
+      <form id="form-transfer" class="stack-form">
+        <label class="field">
+          <span>To jar</span>
+          <select id="transfer-to" required></select>
+        </label>
+        <label class="field">
+          <span>Amount</span>
+          <input type="number" id="transfer-amount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+        </label>
+        <p class="spend-guard" id="transfer-guard" aria-live="polite">Available in this jar</p>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-confirm-transfer">Move</button>
+      </form>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="view-history" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">All activity</h2>
+      <p class="view-sub">Every income, split, spend, and transfer on this phone.</p>
+      <div class="filter-row" id="history-filters">
+        <button type="button" class="chip is-on" data-filter="all">All</button>
+        <button type="button" class="chip" data-filter="income">Income</button>
+        <button type="button" class="chip" data-filter="allocate">Splits</button>
+        <button type="button" class="chip" data-filter="spend">Spends</button>
+        <button type="button" class="chip" data-filter="transfer">Moves</button>
+      </div>
+      <ul class="activity-list" id="history-list"></ul>
+    </section>
+
+    <!-- REPORT -->
+    <section id="view-report" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">This month</h2>
+      <p class="view-sub" id="report-period">Monthly summary</p>
+      <div class="report-grid" id="report-summary"></div>
+      <h3 class="report-heading">Jar balances</h3>
+      <ul class="report-jars" id="report-jars"></ul>
+    </section>
+
+    <!-- HELP -->
+    <section id="view-help" class="view">
+      <button type="button" class="back-btn" data-back="home">← Back</button>
+      <h2 class="view-title">How Pocket works</h2>
+      <ol class="help-steps">
+        <li><strong>Add income</strong> — paycheck or extra cash lands in Ready to place.</li>
+        <li><strong>Split now</strong> — apply your % plan, split evenly, or type amounts into jars.</li>
+        <li><strong>Spend only from a jar</strong> — Pocket blocks the spend if that jar is empty or the amount is too high.</li>
+        <li><strong>Move money</strong> — shift leftover cash between jars without leaving Pocket.</li>
+      </ol>
+      <div class="settings-block">
+        <h3>NWC4343 · 0826</h3>
+        <p>Group project: a mobile income manager that separates money into commitments, food, saving, and other jars so you do not overspend.</p>
+      </div>
     </section>
 
     <!-- EDIT / NEW JAR -->
@@ -157,7 +224,7 @@
       <form id="form-settings" class="stack-form">
         <label class="field">
           <span>Currency symbol</span>
-          <input type="text" id="currency-symbol" maxlength="3" placeholder="₱" />
+          <input type="text" id="currency-symbol" maxlength="3" placeholder="RM" />
         </label>
         <div class="settings-block plan-block">
           <h3>Split plan (%)</h3>
@@ -167,6 +234,17 @@
         </div>
         <button type="submit" class="btn btn-primary btn-block">Save</button>
       </form>
+      <div class="settings-block">
+        <h3>Backup</h3>
+        <p>Export a JSON file for your report appendix, or restore it on another phone. Data never leaves the device unless you save the file.</p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-ghost" id="btn-export">Export data</button>
+          <label class="btn btn-ghost file-btn">
+            Import
+            <input type="file" id="import-file" accept="application/json" hidden />
+          </label>
+        </div>
+      </div>
       <div class="settings-block">
         <h3>On your phone</h3>
         <p>Open this page in Safari or Chrome, then use <strong>Add to Home Screen</strong>. Pocket works offline after the first visit.</p>
